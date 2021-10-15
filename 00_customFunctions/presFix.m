@@ -1,3 +1,5 @@
+% present fixation cross; cross size is hardcoded and relative to window
+% size (pixels), duration is given in seconds
 function presFix(window, fixDurSec)
     [winSize(1), winSize(2)] = Screen('WindowSize', window);
     winCenter = winSize ./ 2;
