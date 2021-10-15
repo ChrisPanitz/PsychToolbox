@@ -1,5 +1,5 @@
 function ssv4(subNo)
-%% TAKE OUT FOR ACTUAL EXPERIMENT OR SET TO ZERO
+%% SET TO ZERO FOR ACTUAL EXPERIMENT
 Screen('Preference', 'SkipSyncTests', 1);
 
 
@@ -9,7 +9,7 @@ logFileFolder = [pwd '/logfiles/'];
 logFilePrefix = 'ssv4'; % change for new study
 
 % trial parameters 
-trPerPic = 10; % # of picture presentations per pic & condition
+trPerPic = 5; % # of picture presentations per pic & condition
 breakAftTr = 100; % breaks after how many trials?
 minMaxItiSec = [.8 3]; % min & max ITI in sec, taken from exponential distribution
 
@@ -20,9 +20,11 @@ flickMods = {'box'; 'sin'}; % how flicker stimulus is modulated. 'box' or 'sin' 
 flickDurFrames = 280; % duration of whole stimulus in frames
 
 % image parameters
-imSizeAng = [];%[4 4]; % visual angle, horizontal & vertical
+% no rescaling, original images scaled for 4x4 ° visual angle at 100 cm
+% seating distance and 68.8 PPI
+imSizeAng = []; 
 % distance participant <-> screen
-seatDistInch = 80/2.54; 
+seatDistInch = 100/2.54; 
 % folder with images
 imFolder = [pwd '/imageStimuli/']; % path for image files
 % list of filenames for images
@@ -49,6 +51,8 @@ breakMsg = ['You can take a short break now.\n\n' ...
             'by pressing any mouse button.'];
 goodbyeMsg = ['You have completed the task. Thank you for your participation!\n\n' ...
               'Please remain seated. The experimenter will be with you in a moment.'];
+
+          
 
 %% clearing and initializing stuff
 IOPort('CloseAll');
@@ -87,7 +91,12 @@ try
     ppi = Screen('WindowSize', w) / Screen('DisplaySize', screenNumber) * 25.4;
     % translate visual angle into pixels for picture scaling
     imSizePix = pixFromAngle(imSizeAng, seatDistInch, ppi);
-    
+
+    %% check header parameters for plausibility
+    paramCheck(frPerCyc, flickDurFrames, flickMods, breakAftTr, ...
+               length(frPerCyc)*length(flickMods)*length(imFileList)*trPerPic, ...
+               imSizeAng, w);
+           
     %% create vectors & matrices for stimuli & trials
     % Dynamically creates matrix containing indices to 'look up' frequency
     % (in frPerCyc), flicker modulation (in flickMods), and picture (in
@@ -134,7 +143,8 @@ try
         fixDurThisTime = randExpoInt(.1, minMaxItiSec); 
         % present trial while logging actual flicker duration
         presFix(w, fixDurThisTime);
-        actFlickDur = presFlick(w, condVec(trial,:), flickerVecs, imSizePix, textureVec);
+        actFlickDur = presFlick(w, flickerVecs(condVec(trial,1),condVec(trial,2),:), ...
+                                imSizePix, textureVec(condVec(trial,3)));
         
         % write parameters to data file
         trialOutVec = [subNo trial condVec(trial,:) actFlickDur fixDurThisTime];
@@ -167,4 +177,166 @@ catch
     fclose('all');
 
     psychrethrow(psychlasterror);
-end 
+end
+
+end % ssv4 function
+
+%% custom functions
+
+% checks the validity of some some parameters and gives error messages or
+% warnings. If parameters would result in error, terminate script and give
+% explanation. If choice of parameters is problematic but does not result
+% in error, give warning and allow user to continue with button press.
+function paramCheck(framesPerCycle, framesTotal, flickMods, breakAfterTrials, totalTrials, imageSize, window)
+    % check whether framesTotal is a multiple of all framesPerCycle (error)
+    probFreqs = NaN(1,length(framesPerCycle));
+    for i = length(framesPerCycle):-1:1
+        if framesTotal/framesPerCycle(i) ~= round(framesTotal/framesPerCycle(i),0)
+            probFreqs(i) = framesPerCycle(i);
+        else
+            probFreqs(i) = [];
+        end
+    end
+    if ~isempty(probFreqs)
+        error(['Total number of frames must be an integer multiple of ' ...
+               'each value of frames per cycle. The following values ' ...
+               'do not fit into the total number of frames: ' ...
+               num2str(probFreqs)]);
+    end
+    
+    % check whether flickMods has valid arguments (error)
+    if sum(ismember(flickMods, {'box','sin'})) < length(flickMods)
+        error('Only "box" and "sin" are allowed for genFlickVec modulation input.');
+    end
+    
+    % check whether image size is empty or has two values (error)
+    if ~isempty(imageSize) && length(imageSize) ~= 2
+        error('imageSize parameter must be empty or contain both x and y values.');
+    end
+    
+    % check whether breakAfterTrials leads to equal-sized blocks of trials
+    % (warning)
+    if totalTrials/breakAfterTrials ~= round(totalTrials/breakAfterTrials, 0)
+        fprintf(['the total number of trials is not an integer multiple of ' ...
+                 'breakAfterTrials. This means that the last block will be' ...
+                 'shorter than the others. If you are sure about this, continue' ...
+                 'with a key press\n']);
+        KbStrokeWait;
+    end
+    
+    % check whether number of frames for flicker stimulus is even (warning)
+    if sum(framesPerCycle./2 == round(framesPerCycle./2,0)) < length(framesPerCycle)
+        fprintf(['It is recommended to use only even numbers for frames per ' ...
+                 'cycle. If you are sure about this, continue with a key press.']);
+        KbStrokeWait;
+    end
+
+    % check whether there are overlaps between frequencies and harmonics
+    % (warning)
+    fRate = Screen('NominalFrameRate', window);
+    frequencies = fRate./framesPerCycle;
+    harmonics = repmat(frequencies,1,9) .* sort(repmat(2:10,1,length(framesPerCycle)));
+    critFreqInd = sum(ismember(frequencies, harmonics));
+    if sum(critFreqInd)
+        fprintf(['It is recommend not to use frequencies that have ' ...
+                 'a harmonic that is another used frequency (i.e., f1 * x). ' ...
+                 'Critical frequencies: ' num2str(frequencies(critFreqInd)) ...
+                 ' Hz (i.e., ' num2str(framesPerCycle(critFreqInd)) ' frames ' ...
+                 'per cycle). If you are sure about this, continue with a key press.']);
+        KbStrokeWait;
+    end
+end % function
+
+
+% computes # of pixels required for picture based on the required visual
+% angle, seating distance in inches, and the PPI of the screen; can take
+% multiple and compute vector of values in one call
+function nrPix = pixFromAngle(visAngle, distInch, ppi)
+    nrPix = round(tan(visAngle/360*pi) * ppi * 2 * distInch, 0);
+end
+
+
+% generates vectors of luminance/opaqueness values for flicker
+% presentation (one value per frame); takes frames per cylce, total number
+% of frames and the shape of the modulation ('box' for on/off, 'sin' for
+% sinusoidal)
+function [flickVec] = genFlickVec(framesPerCyc, framesTotal, shapeFunc)
+    if strcmp(shapeFunc, 'box')
+        flickVec = repmat([ones(framesPerCyc/2,1); zeros(framesPerCyc/2,1)], ...
+                          framesTotal/framesPerCyc, 1)';
+    elseif strcmp(shapeFunc, 'sin')
+        flickVec = repmat(sin(1.5*pi:(2*pi/framesPerCyc):(3.5*pi-2*pi/framesPerCyc)) / 2 + .5, ...
+                          1, framesTotal/framesPerCyc);
+    end
+end
+
+
+% wait for any mouse click, detected via the GetMouse function in
+% Psychtoolbox
+function [x, y, buttons] = waitForClick
+    buttons = 0;
+    while ~any(buttons) % wait for press
+        [x, y, buttons] = GetMouse;
+    
+        % Wait 10 ms before checking the mouse again to prevent
+        % overload of the machine at elevated Priority()
+        WaitSecs(0.01);
+    end
+end
+
+
+% returns random interval duration in seconds, following an exponential
+% function with mu as mean of the base function (exprnd function in MATLAB) 
+% and a vector with minimal and maximum duration of interval; mu = .1 works well
+function intInSec = randExpoInt(mu, minMaxSec)
+    intInSec = NaN;
+    while ~(intInSec >= minMaxSec(1) && intInSec <= minMaxSec(2))
+        intInSec = minMaxSec(1) + exprnd(mu,1,1)*diff(minMaxSec);
+    end
+end
+
+
+% present fixation cross; cross size is hardcoded and relative to window
+% size (pixels), duration is given in seconds
+function presFix(window, fixDurSec)
+    [winSize(1), winSize(2)] = Screen('WindowSize', window);
+    winCenter = winSize ./ 2;
+    
+    % hard-coded length of fixation cross arme relative to screen height
+    fixL = round(winSize(2)*.02, 0);
+    
+    % Present fixation cross
+    Screen('DrawLines', window, [-fixL fixL 0 0; 0 0 -fixL fixL], 7, 0, winCenter);
+    Screen('Flip', window);
+    WaitSecs(fixDurSec);
+end
+
+
+% presents a flickering image texture; flickVec is a one-dimensional vector
+% with opaqueness values from 0 to 1 for each frame; imageSize can be empty
+% (no scaling of original image) or have two values for size in pixels ([x
+% y]); texture is texture object; returns actual flicker stimulus duration
+% in seconds obtained with tic & toc commands
+function actFlickDur = presFlick(window, flickVec, imageSize, texture)
+    if isempty(imageSize)
+        imageCoordinates = [];
+    else
+        [winSize(1), winSize(2)] = Screen('WindowSize', window);
+        winCenter = winSize ./ 2;
+        imageCoordinates = [winCenter(1)-imageSize(1)/2 winCenter(2)-imageSize(2)/2 winCenter(1)+imageSize(1)/2 winCenter(2)+imageSize(2)/2];
+    end
+    
+    % send marker via IO Port and log time for measuring flicker duration
+    %IOPort('Write', s3, 'fufufufu99fufufu');
+    %[nwritten, when, errmsg, prewritetime, postwritetime, lastchecktime] = IOPort('Write', s3, 'fufufufu99fufufu');
+    tic;
+    
+    % Present Flicker Stimulus
+    for frame = 1:size(flickVec, 3)
+        Screen('DrawTexture', window, texture, [], imageCoordinates, 0, [], flickVec(frame));
+        Screen('Flip', window);
+    end
+    
+    % check time passed since before flicker stim
+    actFlickDur = toc;
+end
