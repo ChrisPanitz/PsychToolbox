@@ -1,4 +1,9 @@
-function actFlickDur = presFlick(window, condI, flickVec, imageSize, textureVec)
+% presents a flickering image texture; flickVec is a one-dimensional vector
+% with opaqueness values from 0 to 1 for each frame; imageSize can be empty
+% (no scaling of original image) or have two values for size in pixels ([x
+% y]); texture is texture object; returns actual flicker stimulus duration
+% in seconds obtained with tic & toc commands
+function actFlickDur = presFlick(window, flickVec, imageSize, texture)
     if isempty(imageSize)
         imageCoordinates = [];
     else
@@ -14,7 +19,7 @@ function actFlickDur = presFlick(window, condI, flickVec, imageSize, textureVec)
     
     % Present Flicker Stimulus
     for frame = 1:size(flickVec, 3)
-        Screen('DrawTexture', window, textureVec(condI(3)), [], imageCoordinates, 0, [], flickVec(condI(1), condI(2), frame));
+        Screen('DrawTexture', window, texture, [], imageCoordinates, 0, [], flickVec(frame));
         Screen('Flip', window);
     end
     
