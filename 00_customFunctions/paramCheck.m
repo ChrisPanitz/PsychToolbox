@@ -59,3 +59,4 @@ function paramCheck(framesPerCycle, framesTotal, flickMods, breakAfterTrials, im
                      "per cycle). If you're sure about this, continue with a key press\n"]);
             KbStrokeWait;
         end
+end % function
