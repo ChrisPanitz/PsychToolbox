@@ -33,13 +33,21 @@ imFileList = {'pic01.jpg', 'pic02.jpg', 'pic03.jpg', 'pic04.jpg', ...
               'pic17.jpg', 'pic18.jpg', 'pic19.jpg', 'pic20.jpg'};
 
 % strings of instructions to participants          
-welcomeMsg_expStart = ['Welcome and thank you for participating in our experiment.\n\n' ...
-                       'The experimenter will start the task soon.'];
-welcomeMsg_partStart = ['Everything has been set up. You can start the experiment.\n\n' ...
-                        'by pressing the mouse button.'];                   
+welcomeMsg_expStart = ['Welcome and thank you for participating in our\n' ...
+                       'experiment. The experimenter will start the experiment soon.'];
+welcomeMsg_partStart = ['Everything has been set up now. In the upcoming\n' ...
+                        'task you will be presented flickering pictures\n' ...
+                        'in the center of the screen. Your task is to\n' ...
+                        'pay close attention to these pictures. The task\n' ...
+                        'will take about 35 to 40 minutes with several\n' ...
+                        'short breaks in between.\n\n\n' ...
+                        'If you have questions, please let the\n' ...
+                        'experimenter know now. When you are ready\n' ...
+                        'you can start the task by pressing any mouse button.'];                   
 breakMsg = ['You can take a short break now.\n\n' ...
-            'When you are ready, please continue the experiment by pressing any button.'];
-goodbyeMsg = ['You have completed the task. Thank you for your participation\n\n' ...
+            'When you are ready, please continue the experiment\n' ...
+            'by pressing any mouse button.'];
+goodbyeMsg = ['You have completed the task. Thank you for your participation!\n\n' ...
               'Please remain seated. The experimenter will be with you in a moment.'];
 
 %% clearing and initializing stuff
@@ -47,7 +55,6 @@ IOPort('CloseAll');
 clc;
 
 % Setting some form of seed
-% rand('state', sum(100*clock)); % not recommended anymore
 rng(sum(100*clock));
 
 %Initialize sound driver & push for low latencies (1)
@@ -115,11 +122,11 @@ try
     % welcome screen, initiated by experimenter terminated by participant
     DrawFormattedText(w, welcomeMsg_expStart, 'center', 'center');
     Screen('Flip', w);
-    %KbStrokeWait;
+    KbStrokeWait;
     DrawFormattedText(w, welcomeMsg_partStart, 'center', 'center');
     Screen('Flip', w);
-    %waitForClick;
-    %presFix(w, 5);
+    waitForClick;
+    presFix(w, 5);
         
     %% trials start
     for trial = 1 : size(condVec,1)
@@ -128,7 +135,6 @@ try
         % present trial while logging actual flicker duration
         presFix(w, fixDurThisTime);
         actFlickDur = presFlick(w, condVec(trial,:), flickerVecs, imSizePix, textureVec);
-        %actFlickDur = presFlick(w, condVec(trial,:), flickerVecs, textureVec);
         
         % write parameters to data file
         trialOutVec = [subNo trial condVec(trial,:) actFlickDur fixDurThisTime];
@@ -139,7 +145,7 @@ try
            DrawFormattedText(w, breakMsg, 'center', 'center');
            Screen('Flip', w);
            waitForClick;
-           presFix(w, 3);
+           presFix(w, 5);
         end % break conditional
     end % trial loop
         
