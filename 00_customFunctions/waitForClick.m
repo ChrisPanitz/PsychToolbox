@@ -1,5 +1,6 @@
+% wait for any mouse click, detected via the GetMouse function in
+% Psychtoolbox
 function [x, y, buttons] = waitForClick
-% wait for mouse press ( no GetClicks  :(  )
     buttons = 0;
     while ~any(buttons) % wait for press
         [x, y, buttons] = GetMouse;
