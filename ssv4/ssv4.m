@@ -1,6 +1,6 @@
 function ssv4(subNo)
 %% SET TO ZERO FOR ACTUAL EXPERIMENT
-Screen('Preference', 'SkipSyncTests', 1);
+Screen('Preference', 'SkipSyncTests', 0);
 
 
 %% Header
@@ -68,7 +68,7 @@ AssertOpenGL;
 
 %% Prepare logging
 % open serial port
-%s3 = serialport('com3', 9600);
+[s3, ~] = IOPort('OpenSerialPort', '/dev/ttyS0', 'Baudrate = 9600');
 %fopen(s3);
 
 % file to write trial data in + variable names for header line
@@ -140,11 +140,12 @@ try
     %% trials start
     for trial = 1 : size(condVec,1)
         % set fix cross duration (sec) from exponential distribution with mu = .1
-        fixDurThisTime = randExpoInt(.1, minMaxItiSec); 
+        fixDurThisTime = randExpoInt(minMaxItiSec); 
+        
         % present trial while logging actual flicker duration
         presFix(w, fixDurThisTime);
         actFlickDur = presFlick(w, flickerVecs(condVec(trial,1),condVec(trial,2),:), ...
-                                imSizePix, textureVec(condVec(trial,3)));
+                                imSizePix, textureVec(condVec(trial,3)), s3);
         
         % write parameters to data file
         trialOutVec = [subNo trial condVec(trial,:) actFlickDur fixDurThisTime];
@@ -287,11 +288,13 @@ end
 
 % returns random interval duration in seconds, following an exponential
 % function with mu as mean of the base function (exprnd function in MATLAB) 
-% and a vector with minimal and maximum duration of interval; mu = .1 works well
-function intInSec = randExpoInt(mu, minMaxSec)
+% and a vector with minimal and maximum duration of interval; the value of
+% 6.5 for computing lambda was obtained by trying out
+function intInSec = randExpoInt(minMaxSec)
     intInSec = NaN;
     while ~(intInSec >= minMaxSec(1) && intInSec <= minMaxSec(2))
-        intInSec = minMaxSec(1) + exprnd(mu,1,1)*diff(minMaxSec);
+        lambda = 6.5/diff(minMaxSec);
+        intInSec = minMaxSec(1) - log(1-rand(1,1))/lambda;
     end
 end
 
@@ -317,7 +320,7 @@ end
 % (no scaling of original image) or have two values for size in pixels ([x
 % y]); texture is texture object; returns actual flicker stimulus duration
 % in seconds obtained with tic & toc commands
-function actFlickDur = presFlick(window, flickVec, imageSize, texture)
+function actFlickDur = presFlick(window, flickVec, imageSize, texture, portOut)
     if isempty(imageSize)
         imageCoordinates = [];
     else
@@ -327,8 +330,8 @@ function actFlickDur = presFlick(window, flickVec, imageSize, texture)
     end
     
     % send marker via IO Port and log time for measuring flicker duration
-    %IOPort('Write', s3, 'fufufufu99fufufu');
     %[nwritten, when, errmsg, prewritetime, postwritetime, lastchecktime] = IOPort('Write', s3, 'fufufufu99fufufu');
+    IOPort('Write', portOut, 'fufufufu99fufufu');
     tic;
     
     % Present Flicker Stimulus
