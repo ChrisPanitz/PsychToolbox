@@ -3,7 +3,7 @@
 % (no scaling of original image) or have two values for size in pixels ([x
 % y]); texture is texture object; returns actual flicker stimulus duration
 % in seconds obtained with tic & toc commands
-function actFlickDur = presFlick(window, flickVec, imageSize, texture)
+function actFlickDur = presFlick(window, flickVec, imageSize, texture, portOut)
     if isempty(imageSize)
         imageCoordinates = [];
     else
@@ -13,8 +13,8 @@ function actFlickDur = presFlick(window, flickVec, imageSize, texture)
     end
     
     % send marker via IO Port and log time for measuring flicker duration
-    %IOPort('Write', s3, 'fufufufu99fufufu');
     %[nwritten, when, errmsg, prewritetime, postwritetime, lastchecktime] = IOPort('Write', s3, 'fufufufu99fufufu');
+    IOPort('Write', portOut, 'fufufufu99fufufu');
     tic;
     
     % Present Flicker Stimulus
