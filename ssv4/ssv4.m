@@ -74,7 +74,7 @@ AssertOpenGL;
 % file to write trial data in + variable names for header line
 logFileName = strcat(logFileFolder, logFilePrefix, '_', num2str(subNo), '.dat');
 fID = fopen(logFileName, 'w');
-fprintf(fID,'subNo,trial,freq,mod,pic,actFlickDur,fixDur\n');
+fprintf(fID,'subNo,trial,freq,mod,pic,actFlickDur,fixDur,actFixDur\n');
 fclose(fID);
 
 %% actual experiment is in try loop
@@ -143,16 +143,18 @@ try
         fixDurThisTime = randExpoInt(minMaxItiSec); 
         
         % present trial while logging actual flicker duration
+        tic;
         presFix(w, fixDurThisTime);
+        actFixDur = toc;
         actFlickDur = presFlick(w, flickerVecs(condVec(trial,1),condVec(trial,2),:), ...
                                 imSizePix, textureVec(condVec(trial,3)), s3);
         
         % write parameters to data file
-        trialOutVec = [subNo trial condVec(trial,:) actFlickDur fixDurThisTime];
+        trialOutVec = [subNo trial condVec(trial,:) actFlickDur fixDurThisTime actFixDur];
         dlmwrite(logFileName, trialOutVec, '-append');
         
-        % Short break for participants (after [pauseAftTr] trials)
-        if trial/breakAftTr == round(trial/breakAftTr, 0)
+        % Short break for participants (after [pauseAftTr] trials but not after last one)
+        if trial/breakAftTr == round(trial/breakAftTr, 0) && trial ~= size(condVec, 1)
            DrawFormattedText(w, breakMsg, 'center', 'center');
            Screen('Flip', w);
            waitForClick;
@@ -163,9 +165,12 @@ try
     % final screen, disappears automatically after 10 sec
     DrawFormattedText(w, goodbyeMsg, 'center', 'center');
     Screen('Flip', w);
-    presFix(w, 10);
+    WaitSecs(10);
 
     % tidy up
+    Screen('CloseAll');
+    ShowCursor;
+    fclose('all');    
     IOPort('CloseAll');
     
     %%% that's it (if everything worked) %%%
