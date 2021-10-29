@@ -5,7 +5,7 @@ Screen('Preference', 'SkipSyncTests', 0);
 
 %% Header
 % for logfiles
-logFileFolder = [pwd '/logfiles/'];
+logFileFolder = '/home/andreaskeil/Desktop/As_Exps/ssv4/logfiles/';
 logFilePrefix = 'ssv4'; % change for new study
 
 % trial parameters 
@@ -20,13 +20,13 @@ flickMods = {'box'; 'sin'}; % how flicker stimulus is modulated. 'box' or 'sin' 
 flickDurFrames = 280; % duration of whole stimulus in frames
 
 % image parameters
-% no rescaling, original images scaled for 4x4 ° visual angle at 100 cm
+% no rescaling, original images scaled for 4x4 ° visual angle at 125 cm
 % seating distance and 68.8 PPI
 imSizeAng = []; 
 % distance participant <-> screen
-seatDistInch = 100/2.54; 
+seatDistInch = 120/2.54; 
 % folder with images
-imFolder = [pwd '/imageStimuli/']; % path for image files
+imFolder = '/home/andreaskeil/Desktop/As_Exps/ssv4/imageStimuli/'; % path for image files
 % list of filenames for images
 imFileList = {'pic01.jpg', 'pic02.jpg', 'pic03.jpg', 'pic04.jpg', ...
               'pic05.jpg', 'pic06.jpg', 'pic07.jpg', 'pic08.jpg', ...
@@ -58,8 +58,9 @@ goodbyeMsg = ['You have completed the task. Thank you for your participation!\n\
 IOPort('CloseAll');
 clc;
 
-% Setting some form of seed
-rng(sum(100*clock));
+% Setting rng seed; "old" rand function (instead of rng) was used for
+% reasons of compatibility with lab computer
+rand('state',sum(100*clock));
 
 %Initialize sound driver & push for low latencies (1)
 %InitializePsychSound(1) 
@@ -74,7 +75,7 @@ AssertOpenGL;
 % file to write trial data in + variable names for header line
 logFileName = strcat(logFileFolder, logFilePrefix, '_', num2str(subNo), '.dat');
 fID = fopen(logFileName, 'w');
-fprintf(fID,'subNo,trial,freq,mod,pic,actFlickDur,fixDur,actFixDur\n');
+fprintf(fID,'subNo,trial,cond,pic,actFlickDur,fixDur\n');
 fclose(fID);
 
 %% actual experiment is in try loop
@@ -143,14 +144,13 @@ try
         fixDurThisTime = randExpoInt(minMaxItiSec); 
         
         % present trial while logging actual flicker duration
-        tic;
         presFix(w, fixDurThisTime);
-        actFixDur = toc;
         actFlickDur = presFlick(w, flickerVecs(condVec(trial,1),condVec(trial,2),:), ...
                                 imSizePix, textureVec(condVec(trial,3)), s3);
         
         % write parameters to data file
-        trialOutVec = [subNo trial condVec(trial,:) actFlickDur fixDurThisTime actFixDur];
+        combCond = condVec(trial,1)*10 + condVec(trial,2);
+        trialOutVec = [subNo trial combCond condVec(trial,3) actFlickDur fixDurThisTime];
         dlmwrite(logFileName, trialOutVec, '-append');
         
         % Short break for participants (after [pauseAftTr] trials but not after last one)
@@ -165,7 +165,7 @@ try
     % final screen, disappears automatically after 10 sec
     DrawFormattedText(w, goodbyeMsg, 'center', 'center');
     Screen('Flip', w);
-    WaitSecs(10);
+    KbStrokeWait;
 
     % tidy up
     Screen('CloseAll');
