@@ -24,7 +24,7 @@ flickDurFrames = 280; % duration of whole stimulus in frames
 % seating distance and 68.8 PPI
 imSizeAng = []; 
 % distance participant <-> screen
-seatDistInch = 120/2.54; 
+seatDistInch = 125/2.54; 
 % folder with images
 imFolder = '/home/andreaskeil/Desktop/As_Exps/ssv4/imageStimuli/'; % path for image files
 % list of filenames for images
