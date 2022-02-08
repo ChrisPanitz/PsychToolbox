@@ -38,7 +38,7 @@ function ratingMat = rateCSmouse(window, buttonsOK, pauseDur, continuousRatings,
                 0:10; ...
                 0:10:100};
 
-    if sum(unique([length(textVec), length(anchorsVec), length(labelVec)])) > 1
+    if length(unique([length(textVec), length(anchorsVec), length(labelVec)])) > 1
         error('Cell arrays in header section need same number of lines')
     end
     
