@@ -248,6 +248,7 @@ try
     waitForClick();
     presFix(w,1);
 
+    ShowCursor();
     currRatings = rateCSmouse(w,buttonsOK,pauseBtwRat,false,textureVec);
     dlmwrite(ratFileName, [subNo, currentRatingInd, currRatings], '-append');
     dlmwrite(ratAllFileName, [subNo, currentRatingInd, currRatings], '-append');
