@@ -5,7 +5,7 @@ Screen('Preference', 'SkipSyncTests', 0);
 
 %% Header
 % trial parameters 
-nrBlocksRecall = 2; % # of blocks in acquisition; ratings after each block
+nrBlocksRecall = 2; % # of blocks in recall; ratings after each block
 nrTrialsRecall = 18; % # of trials per stimulus and per block
 
 minMaxItiSec = [5.5 15.4]; % min & max ITI in sec, taken from exponential distribution
