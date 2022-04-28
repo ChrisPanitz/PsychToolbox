@@ -17,7 +17,6 @@ nrBoostersMassed = 3; % nr of initial CS+ trials that come in short succession a
 maxGSbtwBooster = 2; % max nr of GS that can occur between massed booster CS
 nrBoostersRandom = 3; % after massed booster CS: nr of CS+ with 100% pairing without restrictions of CS/GS order
 
-
 nrBlocksExt = 1; % # of blocks in acquisition; ratings after each block
 nrTrialsExt = 15; % # of trials per stimulus and per block
 
@@ -95,7 +94,6 @@ goodbyeMsg = ['You have completed the task. Thank you for your participation!\n\
               'The experimenter will be with you in a moment.'];
 
 % ports & codes
-%%% NOT TESTED YET %%%
 addressesLPTHex = '3EFC'; % LPT port adress in HEX
 firstTRcode = 99; % port code for first TR
 % stimCodes = 2; % codes (DEC) sent via LPT when Gabors are presented -
@@ -180,7 +178,7 @@ ratingCount = 0;
 
 % for habituation trials
 for bl = 1:nrBlocksHab
-    tempMat = NaN(trialsPerBlockHab,3);
+    tempMat = NaN(trialsPerBlockHab,5);
     tempMat(:,1:2) = pseudoShuffleWithBooster(conds, nrTrialsHab, 0, ...
                      0, [], maxSeqCS, 0, true);
     % ITI, phase, & block columns
@@ -197,7 +195,7 @@ end
 
 % for acquisition trials
 for bl = 1:nrBlocksAcq
-    tempMat = NaN(length(conds)*nrTrialsAcq,3);
+    tempMat = NaN(length(conds)*nrTrialsAcq,5);
     % CS & US column - boosters only in first block
     if bl == 1
        tempMat(:,1:2) = pseudoShuffleWithBooster(conds, nrTrialsAcq, nrBoostersMassed, ...
@@ -220,7 +218,7 @@ end
 
 % for extinction trials
 for bl = 1:nrBlocksExt
-    tempMat = NaN(trialsPerBlockExt,3);
+    tempMat = NaN(trialsPerBlockExt,5);
     tempMat(:,1:2) = pseudoShuffleWithBooster(conds, nrTrialsExt, 0, ...
                      0, [], maxSeqCS, 0, true);
     % ITI, phase, & block columns
