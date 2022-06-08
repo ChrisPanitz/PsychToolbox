@@ -1,6 +1,6 @@
 function gaborgen24_fMRI_Day2(subNo, csPerm)
 %% SET TO ZERO FOR ACTUAL EXPERIMENT
-Screen('Preference', 'SkipSyncTests', 0);
+Screen('Preference', 'SkipSyncTests', 1);
 
 
 %% Header
@@ -34,19 +34,19 @@ flickDurFrames = 124; % duration of whole stimulus in frames; 124/60 = 2.067 s
 % US parameters - for BIOPAC stimulator
 % Not needed at the time of writing
 % leaving it in, in case needed in the future
-%nrPulses = 8; % number of single pulses
-%secBtwPulses = 1/120; % time between single pulses in sec
-%shockOnsetSecs = 2; % shock onset how many seconds after CS onset?
+nrPulses = 8; % number of single pulses
+secBtwPulses = 1/120; % time between single pulses in sec
+shockOnsetSecs = 2; % shock onset how many seconds after CS onset?
 % analog output settings to BIOPAC signal generator (not the actual current stimulator)
 % only change if you know what you are doing
-%baselineVolt = -10; % baseline DC throughout experiment
-%peakVolt = 10; % voltage level to trigger shock
-%daqScanRate = 960000; % scan rate of the D/A box - max = 1 MHz
+baselineVolt = -10; % baseline DC throughout experiment
+peakVolt = 10; % voltage level to trigger shock
+daqScanRate = 960000; % scan rate of the D/A box - max = 1 MHz
 
 % rating & instruction parameters
 pauseBtwRat = 1*TRdur; % pause duration between two ratings, in sec
-ratingDur = 2*TRdur; % time out for ratings, in sec
-instructDur = 2*TRdur; % fixed duration of instruction screens, in sec
+ratingDur = 3*TRdur; % time out for ratings, in sec
+instructDur = 3*TRdur; % fixed duration of instruction screens, in sec
 buttonsLeft = KbName('b'); % DEC key codes for moving rating cursor left
 buttonsRight = KbName('y'); % DEC key codes for moving rating cursor right
 buttonsOK = KbName('g'); % DEC key codes for confirm rating selection
@@ -55,7 +55,7 @@ buttonsOK = KbName('g'); % DEC key codes for confirm rating selection
 backgroundCol = 127.5; % bakcground color; 127.5 = mid gray
 gratingDark = 0; % dark grating stripes = 0 = black
 gratingBright = 255; % bright grating stripes = 255 = white
-fontSize = 32; % well... font size
+fontSize = 24; % well... font size
 
 % for logfiles and rating files
 logFileFolder = 'C:\Users\dinglab.UFAD\Desktop\Gaborgen24 paradigm\';
@@ -93,8 +93,8 @@ addressesLPTHex = '3EFC'; % LPT port adress in HEX
 firstTRcode = 99; % port code for first TR
 % stimCodes = 2; % codes (DEC) sent via LPT when Gabors are presented -
 % stimCodes currently is set for each trial
-TRtriggerCodes = ['t','5%']; % serial port codes from fMRI, coded as keyboard strokes     
-
+%TRtriggerCodes = ['t','5%']; % serial port codes from fMRI, coded as keyboard strokes     
+TRtriggerCodes = ['t']; % serial port codes from fMRI, coded as keyboard strokes  
 
 %% check if there is a Day 1 logfile for this participant and if they have
 % the same CS-Gabor permutation
@@ -177,7 +177,7 @@ conds = 1:nrCS; % vector counting up for # of CS
 trialsPerBlockRecall = nrCS*nrTrialsRecall; % how many trials per HAB block across all CS
 
 % initialize (empty) trialMat to store CS type, US [yes/no], ITI duration, phase, & block
-trialMat = NaN(nrBlocksHab*trialsPerBlockRecall, 5);
+trialMat = NaN(nrBlocksRecall*trialsPerBlockRecall, 5);
 % initialize (empty) ratingAfterTrial that contains indices for every
 % block's last trial
 ratingAfterTrial = NaN(nrBlocksRecall,1);
@@ -209,21 +209,21 @@ flickerVec = squeeze(flickerVec)';
 
 % initialize Biopac device & output port for electrical stimulation
 % in case it was already initialized 
-%daqreset; 
+daqreset; 
 % create object for data acquisition toolbox device, add output channel, 
 % set scan rate, and set DC to baseline level
-%d = daq('mcc');
-%addoutput(d,'Board0','Ao0','Voltage');
-%d.Rate = daqScanRate;
-%write(d, baselineVolt); 
+d = daq('mcc');
+addoutput(d,'Board0','Ao0','Voltage');
+d.Rate = daqScanRate;
+write(d, baselineVolt); 
 % create square function for shock delivery
-%biopacTrigger = [baselineVolt*ones(round(shockOnsetSecs*d.Rate),1); ...
-%                 repmat([peakVolt.*ones(round(secBtwPulses*d.Rate/2),1); ... 
-%                        baselineVolt.*ones(round(secBtwPulses*d.Rate/2),1)], ...
-%                        nrPulses, 1)]; 
-%biopacNothing = [baselineVolt*ones(round(shockOnsetSecs*d.Rate),1); ...
-%                 repmat(baselineVolt.*ones(round(secBtwPulses*d.Rate),1), ...
-%                        nrPulses, 1)]; 
+biopacTrigger = [baselineVolt*ones(round(shockOnsetSecs*d.Rate),1); ...
+                repmat([peakVolt.*ones(round(secBtwPulses*d.Rate/2),1); ... 
+                       baselineVolt.*ones(round(secBtwPulses*d.Rate/2),1)], ...
+                       nrPulses, 1)]; 
+biopacNothing = [baselineVolt*ones(round(shockOnsetSecs*d.Rate),1); ...
+                repmat(baselineVolt.*ones(round(secBtwPulses*d.Rate),1), ...
+                       nrPulses, 1)]; 
 
 
 %% PTB code is in try loop
@@ -257,27 +257,30 @@ try
     %%%%%   HERE COMES THE ACTUAL EXPERIMENT   %%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
+    io64(lptPortObj, adressesLPT, 0); % just to be sure
     HideCursor();
         
+    % welcome screen, terminated after participant button press
+    DrawFormattedText(w, welcomeMsg, 'center', 'center');
+    Screen('Flip', w);
+    waitForScanTriggerKb([buttonsLeft, buttonsRight, buttonsOK]); % actually waits for any button press
+
     % wait for the first MRI pulse, log system time and send code to EEG
     timeFirstTR = waitForScanTriggerKb(TRtriggerCodes);
     io64(lptPortObj, adressesLPT, firstTRcode);
-    
-    % welcome screen, terminated after fixed duration
-    DrawFormattedText(w, welcomeMsg, 'center', 'center');
+    WaitSecs(.010);
+    io64(lptPortObj, adressesLPT, 0);
+    presFix(w, TRdur);
+
+    % instruction screen for ratings, fixed duration
+    DrawFormattedText(w, preRatMsg, 'center', 'center');
     Screen('Flip', w);
     WaitSecs(instructDur);
     presFix(w, TRdur);
 
-    % instruction screen & ratings, controlled by participant mouse click
-    DrawFormattedText(w, preRatMsg, 'center', 'center');
-    Screen('Flip', w);
-    WaitSecs(instructDur);
-    presFix(w, TRDur);
-
     % run rating routine and write output into file (append mode)
     currRatings = rateCSMRI(w, buttonsLeft, buttonsRight, buttonsOK, ...
-                            ratingDur, pauseBtwRat, textureVec);
+                           ratingDur, pauseBtwRat, textureVec);
     dlmwrite(ratFileName, [subNo, currentRatingInd, currRatings], '-append');
     dlmwrite(ratAllFileName, [subNo, currentRatingInd, currRatings], '-append');
     currentRatingInd = currentRatingInd+1;
@@ -495,17 +498,22 @@ end
 
 
 
-% Written to wait for and detect MRI pulses sent via serial port; uses
-% keyboard logging commands. Logs system time when pulse is detected.
-% keys = vector of acceptable keys as string (e.g. ['a', 'b'])
+% Written to wait for and detect MRI triggers sent via serial port; uses
+% keyboard logging commands. Logs system time when trigger is detected.
+% keys = vector of acceptable keys as chars (e.g. ['a', 'b']) or ints ([4, 5])
 function startTime = waitForScanTriggerKb(keys)
     % create keyCode object with 256 zeros (length of KbCheck keyCode output)
     keyCode = zeros(1,256);
     
-    % translate key strings into DEC format
-    keyInd = NaN(length(keys),1);
-    for key = 1:length(keys)
-        keyInd(key) = KbName(keys(key));
+    if ischar(keys)
+        % translate key strings into DEC format
+        keyInd = NaN(length(keys),1);
+        for key = 1:length(keys)
+            keyInd(key) = KbName(keys(key));
+        end
+    else
+        % leave integers as is
+        keyInd = keys;
     end
     
     % check for "key strokes" and log them in keyCode
@@ -514,7 +522,7 @@ function startTime = waitForScanTriggerKb(keys)
         WaitSecs(0.001);
     end
 
-    % When key stroke (aka pulse) has been detected, log system time
+    % When key stroke (aka trigger) has been detected, log system time
     startTime = GetSecs;
 
 end % function
@@ -582,8 +590,11 @@ function [actFlickDur, startTime] = presFlickBiopacShock(window, flickVec, image
     % check time passed since before flicker stim
     actFlickDur = GetSecs() - startTime;
 
-    % stop output channel
+    % stop output channel and set LPT to 0
     stop(daqObject);
+    for portI = 1:size(lptAdresses,1)
+        io64(lptObject, lptAdresses(portI,:), 0);
+    end
 end
 
 
