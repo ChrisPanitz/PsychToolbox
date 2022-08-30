@@ -1,6 +1,6 @@
 function gaborgen24_fMRI_Day1(subNo, csPerm)
 %% SET TO ZERO FOR ACTUAL EXPERIMENT
-Screen('Preference', 'SkipSyncTests', 1);
+Screen('Preference', 'SkipSyncTests', 0);
 
 
 %% Header
@@ -8,17 +8,17 @@ TRdur = 2; % TR length in seconds
 
 % trial parameters 
 nrBlocksHab = 1; % # of blocks in acquisition; ratings after each block
-nrTrialsHab = 10; % # of trials per stimulus and per block
+nrTrialsHab = 8; % # of trials per stimulus and per block
 
 nrBlocksAcq = 2; % # of blocks in acquisition; ratings after each block
-nrTrialsAcq = 16; % # of trials per stimulus and per block
+nrTrialsAcq = 12; % # of trials per stimulus and per block
 percPairing = .5; % % CS+ / US pairing 
 nrBoostersMassed = 3; % nr of initial CS+ trials that come in short succession and are paired 100%
 maxGSbtwBooster = 2; % max nr of GS that can occur between massed booster CS
 nrBoostersRandom = 3; % after massed booster CS: nr of CS+ with 100% pairing without restrictions of CS/GS order
 
 nrBlocksExt = 1; % # of blocks in acquisition; ratings after each block
-nrTrialsExt = 15; % # of trials per stimulus and per block
+nrTrialsExt = 12; % # of trials per stimulus and per block
 
 minMaxItiSec = [5.5 15.4]; % min & max ITI in sec, taken from exponential distribution
 meanItiSec = 7; % mean ITI duration in sec
@@ -74,24 +74,24 @@ ratAllFileFolder = 'C:\Users\dinglab.UFAD\Desktop\Gaborgen24 paradigm\';
 ratAllFilePrefix = 'gaborgen24_fMRI_Day1'; 
 
 % strings of instructions to participants          
-welcomeMsg = ['Thank you for participanting in our experiment In the upcoming\n' ...
-              'task you will be presented flickering pictures\n' ...
+welcomeMsg = ['Thank you for participanting in our experiment. In the upcoming\n' ...
+              'task, you will be presented flashing pictures\n' ...
               'in the center of the screen. Please pay attention\n' ...
               'to them. An electric shock also may occur from time\n' ...
               'to time. Every now and then you will be asked to\n' ...
               'answer questions about how you experience the pictures.\n'...
-              'The whole task will last about 50 minutes.\n\n\n' ...
-              'If you have questions, please let the\n' ...
-              'experimenter know now. The task will begin in a moment.'];
+              'The whole task will last about 35 minutes.\n\n\n' ...
+              'If you have questions, please let the experimenter know now.\n' ...
+              'If you are ready, you can start the task by pressing any button.'];
 preRatMsg = ['Please rate for each picture how unpleasant and arousing you find it,\n' ...
-             'how fearful you are seeing it, and how likely you think it will be\n' ...
-             'followed by a shock. You can move the cursor to the left or right\n' ...
-             'by using the buttons in your hand. You have ' int2str(ratingDur) ' seconds\n'  ...
-              'to move the cursor around before your rating is saved.'];
+             'as well as how likely you think it will be followed by a shock.\n' ...
+             'You can move the cursor to the left or right by using the buttons\n' ...
+             ' in your hand. You have ' int2str(ratingDur) ' seconds\n'  ...
+              'to move the cursor around before your rating is logged.'];
 postRatMsg = ['Thank you for rating the pictures.\n' ...
               'The task will continue in a moment.'];
-goodbyeMsg = ['You have completed the task. Thank you for your participation!\n\n' ...
-              'The experimenter will be with you in a moment.'];
+goodbyeMsg = ['You have completed the task. The scan is still in progress.\n\n' ...
+              'Please remain still. The experimenter will be with you after the scan ends.'];
 
 % ports & codes
 addressesLPTHex = '3EFC'; % LPT port adress in HEX
@@ -126,10 +126,12 @@ fprintf(fIDLog,'partNo,csPerm,trial,phase,block,stim,paired,timeSinceFirstTR,act
 fclose(fIDLog);
 % ratings
 ratingsHeader = ['partInd,ratInd,' ...
-                 'val_csp,val_gs1,val_gs2,val_gs3,ar_csp,ar_gs1,ar_gs,ar_gs3,' ...
-                 'fear_csp,fear_gs1,fear_gs2,fear_gs3,exp_csp,exp_gs1,exp_gs2,exp_gs3,' ...
-                 'valDur_csp,valDur_gs1,valDur_gs2,valDur_gs3,arDur_csp,arDur_gs1,arDur_gs,arDur_gs3,' ... 
-                 'fearDur_csp,fearDur_gs1,fearDur_gs2,fearDur_gs3,expDur_csp,expDur_gs1,expDur_gs2,expDur_gs3' ...
+                 'val_csp,val_gs1,val_gs2,val_gs3,'...
+                 'ar_csp,ar_gs1,ar_gs,ar_gs3,' ...
+                 'exp_csp,exp_gs1,exp_gs2,exp_gs3,' ...
+                 'valDur_csp,valDur_gs1,valDur_gs2,valDur_gs3,' ...
+                 'arDur_csp,arDur_gs1,arDur_gs,arDur_gs3,' ... 
+                 'expDur_csp,expDur_gs1,expDur_gs2,expDur_gs3' ...
                  '\n'];
 % individual rating files
 ratFileName = strcat(ratFileFolder, ratFilePrefix, '_', num2str(subNo), '_ratings.dat');
@@ -297,11 +299,12 @@ try
     waitForScanTriggerKb([buttonsLeft, buttonsRight, buttonsOK]); % actually waits for any button press
         
     % wait for the first MRI pulse, log system time and send code to EEG
+    presFix(w, .010);
     timeFirstTR = waitForScanTriggerKb(TRtriggerCodes);
     io64(lptPortObj, adressesLPT, firstTRcode);
     WaitSecs(.010);
     io64(lptPortObj, adressesLPT, 0);
-    presFix(w, 5*TRdur);
+    presFix(w, 3*TRdur);
 
 
     %% trials start
@@ -374,6 +377,7 @@ try
     DrawFormattedText(w, goodbyeMsg, 'center', 'center');
     Screen('Flip', w);
     WaitSecs(instructDur);
+    KbStrokeWait();
 
     % tidy up
     Screen('CloseAll');
@@ -539,7 +543,11 @@ end % function
 
 % present fixation cross; cross size is hardcoded and relative to window
 % size (pixels), duration is given in seconds
-function presFix(window, fixDurSec)
+function presFix(window, fixDurSec, crossColor)
+    if nargin < 3
+        crossColor = 0; % default color is black
+    end
+
     [winSize(1), winSize(2)] = Screen('WindowSize', window);
     winCenter = winSize ./ 2;
     
@@ -547,7 +555,7 @@ function presFix(window, fixDurSec)
     fixL = round(winSize(2)*.02, 0);
     
     % Present fixation cross
-    Screen('DrawLines', window, [-fixL fixL 0 0; 0 0 -fixL fixL], 7, 0, winCenter);
+    Screen('DrawLines', window, [-fixL fixL 0 0; 0 0 -fixL fixL], 7, crossColor, winCenter);
     Screen('Flip', window);
     WaitSecs(fixDurSec);
 end
@@ -719,17 +727,14 @@ function ratingMat = rateCSMRI(window, buttonsLeft, buttonsRight, buttonsOK, max
     % same number of lines
 
     textVec = {'How unpleasant was this pattern to you?'; ...
-               'How arousing was this pattern to you?'; ...
-               'How fearful did you feel when you saw this pattern?'; ...
-               'How likely (in %) will this patern be followed by a shock?'};
+               'How arousing (or activating) was this pattern to you?'; ...
+               'How likely (in %) will this pattern be followed by a shock?'};
 
     anchorsVec = {'very pleasant', 'very unpleasant'; ...
                   'not arousing at all', 'very arousing'; ...
-                  'not fearful at all', 'very fearful'; ...
                   'never followed', 'always followed'};
     
     labelVec = {0:10; ...
-                0:10; ...
                 0:10; ...
                 0:10:100};
 
