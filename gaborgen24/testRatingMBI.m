@@ -10,8 +10,8 @@ TRdur = 2;
 pauseBtwRat = 1*TRdur; % pause duration between two ratings, in sec
 ratingDur = 3*TRdur; % time out for ratings, in sec
 instructDur = 3*TRdur; % fixed duration of instruction screens, in sec
-buttonsLeft = KbName('LeftArrow'); % DEC key codes for moving rating cursor left
-buttonsRight = KbName('RightArrow'); % DEC key codes for moving rating cursor right
+buttonsLeft = KbName('Left'); % DEC key codes for moving rating cursor left
+buttonsRight = KbName('Right'); % DEC key codes for moving rating cursor right
 buttonsOK = KbName('q');
 
 % aesthetics
@@ -20,9 +20,10 @@ fontSize = 24; % well... font size
 
 preRatMsg = ['Please rate for each picture how unpleasant and arousing you find it,\n' ...
              'and how likely you think it will be followed by a shock.\n' ...
-             'You can move the cursor to the left or right\n' ...
-             'by using the buttons in your hand. You have ' int2str(ratingDur) ' seconds\n'  ...
-              'to move the cursor around before your rating is saved.'];
+             'You can move the cursor to the left or right by using the \n' ...
+             '[left] and [right] keys of the keyboard. You have ' int2str(ratingDur) ' seconds\n'  ...
+             'to move the cursor around before your rating is logged.\n\n' ...
+             'Please start a example by pressing any key.'];
 postRatMsg = 'Thank you for rating the pictures.';
 
 
@@ -67,9 +68,9 @@ try
     
     % create texture object
     textureVec = NaN(2,1);
-    % texture of red circle...
+    % texture of red square...
     textureVec(1) = Screen('MakeTexture', w, squarePixRed);
-    % ... and of blue circle
+    % ... and of blue square
     textureVec(2) = Screen('MakeTexture', w, squarePixBlue);
 
     
@@ -85,7 +86,8 @@ try
     % instructions for ratings
     DrawFormattedText(w, preRatMsg, 'center', 'center');
     Screen('Flip', w);
-    WaitSecs(instructDur);
+    %WaitSecs(instructDur);
+    KbStrokeWait();
 
     % run rating routine
     rateCSMRI(w, buttonsLeft, buttonsRight, buttonsOK, ...
@@ -181,17 +183,14 @@ function ratingMat = rateCSMRI(window, buttonsLeft, buttonsRight, buttonsOK, max
 
     textVec = {'How unpleasant was this pattern to you?'; ...
                'How arousing was this pattern to you?'; ...
-               %'How fearful did you feel when you saw this pattern?'; ...
                'How likely (in %) will this pattern be followed by a shock?'};
 
     anchorsVec = {'very pleasant', 'very unpleasant'; ...
                   'not arousing at all', 'very arousing'; ...
-                  %'not fearful at all', 'very fearful'; ...
                   'never followed', 'always followed'};
     
     labelVec = {0:10; ...
                 0:10; ...
-                %0:10; ...
                 0:10:100};
 
     if length(unique([length(textVec), length(anchorsVec), length(labelVec)])) > 1
