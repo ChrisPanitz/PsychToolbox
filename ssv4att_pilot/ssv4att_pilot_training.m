@@ -153,13 +153,13 @@ try
     trainingMat(:,1) = [1 2 2 1 2 1 1 2 1 2 1 2 1 2 2 1 2 1 1 2]; % color/gray cue
     trainingMat(:,2) = [1 1 2 2 1 1 2 2 1 1 2 2 1 1 2 2 1 1 2 2]; % color at which frequency?
     trainingMat(:,3) = [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]; % don't need them, just so that the indices are identical with trialMat
-    trainingMat(:,4) = [3 4 5 4 5 3 5 3 4 5 3 4 4 3 5 3 5 4 4 5] .* frPerMetaCyc; % baseline length
+    trainingMat(:,4) = [3 4 5 3 3 5 5 3 4 5 3 4 4 3 5 5 3 3 4 5] .* frPerMetaCyc; % baseline length
     trainingMat(:,5) = [0 1 0 2 0 0 1 0 0 0 1 0 2 0 0 0 2 0 1 0]; % # baseline events
     trainingMat(:,6) = [0 0 2 3 3 0 0 1 0 0 2 2 0 0 0 0 3 3 0 0]; % # events in color array
     trainingMat(:,7) = [0 2 0 0 0 0 0 1 0 0 0 0 1 0 1 0 0 0 1 0]; % # events in gray array
     trainingMat(:,8) = [0 2 0 3 0 0 0 1 0 0 2 0 0 0 1 0 0 3 0 0]; % # events in attended array
     trainingMat(:,9) = [0 0 2 0 3 0 0 1 0 0 0 2 1 0 0 0 3 0 1 0]; % # events in non-attended array
-    trainingMat(:,10) = createExpIntDurs(12,minMaxITItotal,meanITI*12); % total ITI duration
+    trainingMat(:,10) = createExpIntDurs(20,minMaxITItotal,meanITI*20); % total ITI duration
     trainingMat(:,11) =  minMaxITIprerat(1) + rand(size(trainingMat,1),1).*diff(minMaxITIprerat); % time between trial and rating
     % select for each trial the frames during which events will be "active" (training trials)
     blEventFramesTraining = prepareBlEventFrames(trainingMat(:,5),trainingMat(:,4),flickDurFrames,blEventBuffer,blEventDur);
@@ -190,22 +190,27 @@ try
     HideCursor();
     
     % start screen
-    Msg = ['Thank you for participating in our experiment!\n' ...
-           'Let us explain the task to you before you undergo some training trials./n/n' ...
+    Msg = ['Thank you for participating in our experiment!\n\n' ...
+           'Let us explain the task to you before you undergo some training trials.\n\n' ...
            'Please continue by pressing the left mouse button.'];
     DrawFormattedText(w, Msg, 'center', 'center', textCol);
     Screen('Flip', w);
     waitForClick;
+    
+    WaitSecs(.200);
 
-    Msg = ['In this task you will see a gray square with a cross in the center of the screen.\n' ...
+    Msg = ['In this task you will see a gray square with a cross and letters\n' ...
+           'in the center of the screen.\n\n' ...
            'You will also see colored and gray pictures flashing and moving around.\n\n' ...
-           'Please click to see an example.'];
+           'Click to see an example.'];
     DrawFormattedText(w, Msg, 'center', 'center', textCol);
     Screen('Flip', w);
     waitForClick;
+    
+    presFix(w, .500);
 
     % select pictures
-    textureVec = textureMat(1:8,1);
+    textureVec = [textureMat(1:4,1); textureMat(5:8,2)];
 
     % prepare vectors for central tile
     tickLengthVec = zeros(2,4,flickDurFrames);
@@ -232,19 +237,21 @@ try
                             centTileCol, centTileCoord, tickLengthVec, cueVec, ...
                             []);
     
-
+    presFix(w, .500);                
+                        
     Msg = ['You have to pay attention to two different types of events in every trial:\n\n' ...
-           'First, count how often ticks of the central cross become longer as shown below.\n\n' ...
+           'In the beginning, count how often the ticks of the central cross\n' ...
+           'become longer as shown below.\n\n' ...
            '(Continue by mouse click)'];
 
     exampleTickVec = NaN(2,4,120);
-    exampleTickVec(:,:,1:120-blEventDur) = standardTickPos;
-    exampleTickVec(:,:,blEventDur+1:120) = eventTickPos;
+    exampleTickVec(:,:,1:120-blEventDur) = repmat(standardTickPos,1,1,120-blEventDur);
+    exampleTickVec(:,:,120-blEventDur+1:120) = repmat(eventTickPos,1,1,blEventDur);
 
     buttonPress = false;
     while buttonPress == false
         for frameI = 1:120
-            DrawFormattedText(w, Msg, 'center', winY/3, textCol);
+            DrawFormattedText(w, Msg, 'center', 0.2*winY, textCol);
             Screen('FillRect', w, centTileCol, centTileCoord); 
             Screen('DrawLines', w, exampleTickVec(:,:,frameI), 5, 0);
             Screen('Flip',w);
@@ -256,11 +263,13 @@ try
         end
     end
 
+    presFix(w, .500);
                         
-    Msg = ['Second, the cross will be replaced by a "C" or "G".\n' ...
-           'From there on, concentrate only on the color ("C") or gray ("G") pictures.\n'...
-           'Count how often the attended pictures become darker while ignoring the other pictures.\n' ...
-           'See below for examples of pictues becoming darker every 2 seconds.\n\n' ...
+    Msg = ['Second, you have to count brightness changes in some of the moving pictures.\n\n' ...
+           'At some point, the cross will be replaced by a "C" or "G".\n\n' ...
+           'From there on, concentrate only on the moving pictures in color ("C") or gray ("G").\n\n'...
+           'Count how often the attended pictures become darker while ignoring the other pictures.\n\n' ...
+           'See below for examples of pictues becoming darker every 2 seconds.\n\n\n\n\n\n\n\n' ...
            '(Continue with mouse click)'];
 
     twoPicCoords = NaN(4,2);
@@ -279,11 +288,11 @@ try
 
     buttonPress = false;
     while buttonPress == false
-        for frameI = 1:240
-            DrawFormattedText(w, Msg, 'center', winY/4, textCol);
+        for frame = 1:240
+            DrawFormattedText(w, Msg, 'center', .10*winY, textCol);
             Screen('FillRect', w, centTileCol, centTileCoord); 
             Screen('DrawText', w, 'C', winX/2-fontSize*.4, winY/2-fontSize*.4 ,0);
-            Screen('DrawTextures', w, textureVec{[1,5],1}, [], twoPicCoords, 0, [], twoPicFlicker(:,frame));
+            Screen('DrawTextures', w, textureVec([1,5]), [], twoPicCoords, 0, [], twoPicFlicker(:,frame));
             Screen('Flip',w);
             [~,~,buttons] = GetMouse();
             if any(buttons)
@@ -293,9 +302,13 @@ try
         end
     end
 
+    presFix(w, .500);
+    
     Msg = ['Count all events while you keep looking at the gray square in the middle of the screen.\n\n' ...
+           'There could be one event to count or several. There could be only events in the pictures\n' ...
+           'you have to ignore. Often enough, there might be no event at all. Everything is possible.\n\n'...
            'After each trial, you will be asked to report the *total* number\n' ...
-           'of events you counted. You have 4 seconds to give your answer.\n\n\n' ...
+           'of events you counted. You have 4 seconds to give your answer.\n\n' ...
            'Click the mouse button to see how the rating works (this time without time limit).'];
 
     ratingText = {['How many events in the central cross and the flashing ' ...
@@ -306,31 +319,40 @@ try
     Screen('Flip', w);
     waitForClick;
 
-    rateMouseNopic(w, ...
-                   buttonsOK, 1 ,false ,true ,999 ,scaleLabels, ...
-                   scaleAnchors, ratingText, textCol);
-
+    WaitSecs(.200)
+    
+    ShowCursor();
+    rateMouseNopic(w, buttonsOK, 1 ,false ,true ,999, ...
+                   scaleLabels, scaleAnchors, ratingText, textCol);
+    HideCursor();
+    
+    WaitSecs(.200);
+    
     Msg = ['Time to put it all together.\n\n' ...
-           'In a moment, you will go through a complete trial, this time with events to count.\n' ...
-           'There will be one event in the central cross in the beginning.\n' ...
-           'There will also be a brightness change event in one the attended pictures (this time marked with a green frame)\n' ...
-           'and one in the to-be-ignored pictures (this time marked with a blue frame).\n' ...
-           'The correct answer in this trial would be "2" since there is one cross event and you should\' ...
-           'only count the brighness changes in the attended pictures.\n\n' ...
+           'In a moment, you will go through a complete trial,\n' ...
+           'this time with events to count.\n\n' ...
+           'There will be one event in the central cross in the beginning (ticks become longer once).\n\n' ...
+           'There will also be a brightness change event in one the attended pictures\n' ...
+           '(this time marked with a green frame) and one in the\n' ...
+           'to-be-ignored pictures (this time marked with a blue frame).\n\n' ...
+           'The correct answer in this trial would be "2" since there is one cross event\n' ...
+           'and you should only count the brightness change in the attended pictures.\n\n' ...
            'Please continue with a mouse click.'];
 
     DrawFormattedText(w, Msg, 'center', 'center', textCol);
     Screen('Flip', w);
     waitForClick;
+    
+    presFix(w, .500);
 
     % select pictures
-    textureVec = textureMat(1:8,1);
+    textureVec = [textureMat(1:4,1); textureMat(5:8,2)];
 
     blEventFramesExample = prepareBlEventFrames(1,max(metaCyclesBaseline)*frPerMetaCyc,flickDurFrames,blEventBuffer,blEventDur);
     % prepare vectors for central tile
     tickLengthVec = zeros(2,4,flickDurFrames);
     tickLengthVec(:,:,1:max(metaCyclesBaseline)*frPerMetaCyc) = repmat(standardTickPos,1,1,max(metaCyclesBaseline)*frPerMetaCyc);
-    tickLengthVec(:,:,logical(blEventFramesExample)) = repmat(eventTickPos,1,1,sum(blEventFramesExample));
+    tickLengthVec(:,:,logical(blEventFramesExample{1,:})) = repmat(eventTickPos,1,1,sum(blEventFramesExample{1,:}));
     cueVec(1,1:max(metaCyclesBaseline)*frPerMetaCyc) = ' ';
     cueVec(1,max(metaCyclesBaseline)*frPerMetaCyc+1:flickDurFrames) = cueLetters(1);
 
@@ -339,7 +361,7 @@ try
     lumVectors = NaN(2*picsPerArray, flickDurFrames);
     lumVectors(1:picsPerArray,:) = repmat(flickerVecs(1,:), picsPerArray,1);
     lumVectors(picsPerArray+1:end,:) = repmat(flickerVecs(2,:), picsPerArray,1);
-    lumVectors(logical(cueEventFramesExample)) = lumVectors(logical(cueEventFramesExample)) .* relEventLum;
+    lumVectors(logical(cueEventFramesExample{1,:})) = lumVectors(logical(cueEventFramesExample{1,:})) .* relEventLum;
 
     % compute positions for pictures
     posVecCenter = createCircPositions (2*picsPerArray, flickDurFrames, ...
@@ -374,13 +396,14 @@ try
     Msg = ['Great. Now, you will undergo some training trials.' ...
            'The pictures will have no color frames.\n' ...
            'However, for the training trials, you will get feedback after each trial.\n' ...
-           'The training will go until you get it correct a coouple of times in a row.\n\n' ...
+           'The training will go until you get it correct a couple of times in a row.\n\n' ...
            'When you are ready, start the training trials by clicking the mouse button.'];
 
     DrawFormattedText(w, Msg, 'center', 'center', textCol);
     Screen('Flip', w);
     waitForClick;
 
+    presFix(w, 1);
 
     %% Training start
     
@@ -392,7 +415,7 @@ try
         textureVec = [textureMat(picListInd(1:picsPerArray),1); ...
             textureMat(picListInd(picsPerArray+1:2*picsPerArray),2)];
 
-        % prepare vectors for central tile
+% prepare vectors for central tile
         tickLengthVec = zeros(2,4,flickDurFrames);
         tickLengthVec(:,:,1:trainingMat(trial,4)) = repmat(standardTickPos,1,1,trainingMat(trial,4));
         tickLengthVec(:,:,logical(blEventFramesTraining{trial,:})) = repmat(eventTickPos,1,1,sum(blEventFramesTraining{trial,:}));
@@ -435,7 +458,7 @@ try
             scaleLabels, scaleAnchors, ratingText, textCol);
         HideCursor();
 
-        ratingOffBy = lastRating - trainingMat(trial,X) - trainingMat(trial,Y);
+        ratingOffBy = lastRating(1) - trainingMat(trial,5) - trainingMat(trial,8);
 
         correctMsg = 'Correct!';
         incorrectMsg = 'Sorry, this is not correct.';
@@ -446,10 +469,10 @@ try
         contMsg = '(continue with mouse click)';
 
         if ratingOffBy == 0
-            historyCorrect = [historyCorrect(2:end), 1];
+            historyCorrect = [historyCorrect(2:end); 1];
             DrawFormattedText(w, correctMsg, 'center', .25*winY, [0,255,0]);
         else
-            historyCorrect = [historyCorrect(2:end), 0];
+            historyCorrect = [historyCorrect(2:end); 0];
             DrawFormattedText(w, incorrectMsg, 'center', .25*winY, [0,255,255]);
         end
         DrawFormattedText(w, countMsg, 'center', .50*winY, textCol);
@@ -460,7 +483,7 @@ try
         % fixation
         presFix(w, 1, 255);
 
-        if sum(historyCorrect) < nrCorrectNeeded
+        if sum(historyCorrect) >= nrCorrectNeeded
             break
         end
 
@@ -840,19 +863,19 @@ function actFlickDur = presTrial_ssv4MainPilot_marked(window, textureVec, posVec
 
     startTime = GetSecs();
     
-    eventsWhere = NaN(size(flickVecs,1));
+    eventsWhere = NaN(size(flickVecs,1),1);
     for i = 1:length(eventsWhere)
-        eventsWhere(i) = length(unique(flickVecs(i,:)));
+        eventsWhere(i) = length(unique(flickVecs(i,:))) - 2;
     end
     eventsWhereC = logical([eventsWhere(1:length(eventsWhere)/2); zeros(length(eventsWhere)/2,1)]);
     eventsWhereG = logical([zeros(length(eventsWhere)/2,1); eventsWhere(length(eventsWhere)/2+1:end)]);
 
     colorFrames = zeros(3, length(textureVec));
     
-    if is.element('C', cueVec)
+    if ismember('C', cueVec)
         colorFrames(2,eventsWhereC) = 255;
         colorFrames(3,eventsWhereG) = 255;
-    elseif is.element('G', cueVec)
+    elseif ismember('G', cueVec)
         colorFrames(3,eventsWhereC) = 255;
         colorFrames(2,eventsWhereG) = 255;
     end
@@ -860,7 +883,7 @@ function actFlickDur = presTrial_ssv4MainPilot_marked(window, textureVec, posVec
     % Present Flicker Stimulus (Baseline)
     for frame = 1:blFrames
         Screen('DrawTextures', window, textureVec, [], posVecs(:,:,frame), 0, [], flickVecs(:,frame));
-        Screen('FrameRect', window, colorFrames, posVecs(:,:,frame));
+        Screen('FrameRect', window, colorFrames, posVecs(:,:,frame), 3);
         Screen('FillRect', window, centTileCol, centTileCoord);
         Screen('DrawLines', window, fixVec(:,:,frame), 5, 0);
         Screen('DrawText', window, cueVec(1,frame), winCenter(1)-tSize*.4, winCenter(2)-tSize*.4 ,0);
@@ -875,6 +898,7 @@ function actFlickDur = presTrial_ssv4MainPilot_marked(window, textureVec, posVec
     % Present Flicker Stimulus (Cue)
     for frame = blFrames+1:size(flickVecs,2)
         Screen('DrawTextures', window, textureVec, [], posVecs(:,:,frame), 0, [], flickVecs(:,frame));
+        Screen('FrameRect', window, colorFrames, posVecs(:,:,frame), 3);
         Screen('FillRect', window, centTileCol, centTileCoord);
         Screen('DrawLines', window, fixVec(:,:,frame), 5, 0);
         Screen('DrawText', window, cueVec(1,frame), winCenter(1)-tSize*.4, winCenter(2)-tSize*.4 ,0);
@@ -917,7 +941,7 @@ function ratingMat = rateMouseNopic(window, buttonsOK, pauseDur, continuousRatin
     %% matrices that we need
     ratingMat = NaN(length(labelVec), 3);
     
-    % automatic computation of sizes relative to screen
+    % automatic computation of sizes relative to screensca
     % global values / coordinates
     [xTotal, yTotal] = Screen('WindowSize', window);
     %xCenter = xTotal / 2; %yCenter = yTotal ./ 2;
@@ -944,7 +968,6 @@ function ratingMat = rateMouseNopic(window, buttonsOK, pauseDur, continuousRatin
                           1, length(labelVec{i}))];
     end
     
-
     %% Rating Loop
     for RatI = 1:length(labelVec)
 
@@ -993,7 +1016,8 @@ function ratingMat = rateMouseNopic(window, buttonsOK, pauseDur, continuousRatin
                 keepRunning = false;
             end
 
-            % Draw Question
+            % Draw Question...
+                   
             DrawFormattedText(window, textVec{RatI}, 'center', heightQuestion, textCol);
 
             % Draw Scale
@@ -1031,7 +1055,7 @@ function ratingMat = rateMouseNopic(window, buttonsOK, pauseDur, continuousRatin
         ratingMat(RatI, 3) = ratDur;
 
         % show the marked selected rating for a moment
-        %WaitSecs(.3);
+        WaitSecs(.3);
 
         % draw fixation cross and wait for [pauseDur] seconds
         presFix(window, pauseDur, textCol);
