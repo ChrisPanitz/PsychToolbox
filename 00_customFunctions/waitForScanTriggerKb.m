@@ -1,7 +1,13 @@
+function startTime = waitForScanTriggerKb(keys,devNum)
 % Written to wait for and detect MRI triggers sent via serial port; uses
 % keyboard logging commands. Logs system time when trigger is detected.
 % keys = vector of acceptable keys as chars (e.g. ['a', 'b']) or ints ([4, 5])
-function startTime = waitForScanTriggerKb(keys)
+% devNum = keyboard device number; optional, defaults to -1 (all connected
+% keyboards)
+    if nargin < 2
+        devNum = -1;
+    end
+
     % create keyCode object with 256 zeros (length of KbCheck keyCode output)
     keyCode = zeros(1,256);
     
@@ -18,7 +24,7 @@ function startTime = waitForScanTriggerKb(keys)
     
     % check for "key strokes" and log them in keyCode
     while sum(keyCode(keyInd)) == 0
-        [~, ~, keyCode] = KbCheck;
+        [~, ~, keyCode] = KbCheck(devNum);
         WaitSecs(0.001);
     end
 
