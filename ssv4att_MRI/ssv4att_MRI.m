@@ -1,6 +1,6 @@
 function ssv4att_MRI(subNo)
 %% SET TO ZERO FOR ACTUAL EXPERIMENT
-Screen('Preference', 'SkipSyncTests', 1);
+Screen('Preference', 'SkipSyncTests', 0);
 
 
 %% Header
