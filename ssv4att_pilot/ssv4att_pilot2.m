@@ -12,13 +12,13 @@ logFilePrefix = 'ssv4att';
 breakAftTr = 64; % breaks after how many trials?
 picsPerArray = 4; % there will be a colorpic and a grayscalepic array
 shiftPix = 5; % how many pixels pictures shift per frame on the x and y axes, respectively 
-trNoEvents = 144; % number of trials with no events, must be a multiple of 4
+trNoEvents = 140; %144; % number of trials with no events, must be a multiple of 4
 trEventsBL = 16; %12; % number of trials with only baseline events, must be a multiple of 4
 trEventsCue = 18; % number of trials with only cue task events, must be a multiple of 6
 trEventsBoth = 18; % number of trials with events in both baseline and cue task, must be a multiple of 6
 
 % flicker parameters
-% frPerCyc for 120Hz screen: 20 = 6 Hz, 14 = 8.57 Hz
+% frPerCyc for 120Hz screen: 14 = 8.57 Hz, 8 = 15 Hz
 frPerCyc = [14 8]; % duration of one cycle in frames (for different frequencies)
 flickMods = {'box'}; % how flicker stimulus is modulated. 'box' or 'sin' or both possible
 frPerMetaCyc = 56; % meta cycle is the time window after which all frequencies are in phase again (here in frames)
@@ -37,8 +37,8 @@ centTileCol = [127 127 127]; % color of the central tile
 % cued attention part
 cueEventBuffer = 96; % in frames; 96 frames = 800 ms
 cueEventDur = 72; % in frames; 72 frames = 600 ms
-%maxCueEventsPerMC = 1; % max amount of cue task events per metacycle
-maxCueEventsPerTrial = 3; % max amount of cue task events per trial
+maxCueEventsPerMC = 1/3; % max amount of cue task events per metacycle
+%maxCueEventsPerTrial = 3; % max amount of cue task events per trial
 standardLum = 1; % alpha value for flickering
 eventLum = .25; % alpha value during cue task event
 cueLetters = ['C','G']; % cues that are displayed in the center
@@ -81,23 +81,17 @@ imFileListGray = {'pic01g.jpg', 'pic02g.jpg', 'pic03g.jpg', 'pic04g.jpg', ...
                   'pic17g.jpg', 'pic18g.jpg', 'pic19g.jpg', 'pic20g.jpg'};
 
 % strings of instructions to participants          
-welcomeMsg_expStart = ['Welcome and thank you for participating in our\n' ...
-                       'experiment. The experimenter will start the experiment soon.'];
-welcomeMsg_partStart = ['In this task you will see a gray square with a cross in the center of the screen.\n' ...
-                        'You will also see colored and gray pictures flashing and moving around.\n\n' ...
-                        'You have to pay attention to two different types of events in every trial:\n\n' ...
-                        'First, count how often ticks of the central cross become longer.\n\n' ...
-                        'Second, the cross will be replaced by a "C" or "G".\n' ...
-                        'From there on, concentrate only on the color ("C") or gray ("G") pictures.\n'...
-                        'Count how often the attended pictures become darker while ignoring the other pictures.\n' ...
-                        'Do all of this while you keep looking at the gray square in the middle of the screen.\n\n' ...
-                        'After each trial, you will be asked to report the *total* number\n' ...
-                        'of events you counted. You have 4 seconds to give your answer.\n\n\n' ...
-                        'Click the mouse button to go through some training trials.'];
-trainingOverMsg = ['The training trials are completed and the main task can begin now.\n' ...
-                   'The complete task will take about 45 minutes with\n' ...
-                   'two short breaks in between. When you are ready\n' ...
-                   'you can start the task by pressing any mouse button.'];
+welcomeMsg_expStart = 'The experimenter will start the main task soon.';
+welcomeMsg_partStart = ['We now start with the main task.\n\n' ...
+                        'Remember to count the events in the central cross and\n' ...
+                        'in the attended pictures. In each trial, there might be\n' ...
+                        'one, several, or no events at all.\n\n' ...
+                        'Spread your attention across the screen while you keep your\n' ...
+                        'eyes fixed on the central gray square. We recommend you to\n' ...
+                        'blink as little as possible while the flashing pictures are on.\n\n' ...
+                        'The complete task will take about 45 minutes.\n'...
+                        'There will be two breaks in which you can stretch.\n' ...
+                        'When you are ready, start the task by pressing any mouse button.'];
 breakMsg = ['You can take a short break now.\n\n' ...
             'When you are ready, please continue the experiment\n' ...
             'by pressing any mouse button.'];
@@ -208,14 +202,18 @@ try
     trialMat(trNoEvents+trEventsBL+1:trNoEvents+trEventsBL+trEventsCue+trEventsBoth, 6:7) = ...
         repmat([1,0; 0,1; 1,1], (trEventsCue+trEventsBoth)/3, 1);
     for i = trNoEvents+trEventsBL+1 : trNoEvents+trEventsBL+trEventsCue
+        maxCues = ceil((metaCyclesTotal - trialMat(i,4)/frPerMetaCyc) * maxCueEventsPerMC) - 1;
+        trialMat(i,6:7) = trialMat(i,6:7) .* randi([1, maxCues], 1, 2);
         %trialMat(i,6:7) = trialMat(i,6:7) .* randi([1, (metaCyclesTotal - trialMat(i,4)/frPerMetaCyc) * maxCueEventsPerMC], 1, 2);
-        trialMat(i,6:7) = trialMat(i,6:7) .* randi([1, maxCueEventsPerTrial], 1, 2);
+        %trialMat(i,6:7) = trialMat(i,6:7) .* randi([1, maxCueEventsPerTrial], 1, 2);
     end
     for i = trNoEvents+trEventsBL+trEventsCue+1 : trNoEvents+trEventsBL+trEventsCue+trEventsBoth
         %trialMat(i,5) = randi([1, trialMat(i,4)/frPerMetaCyc*maxBlEventsPerMC]);
         trialMat(i,5) = randi([1, maxBlEventsPerTrial]);
+        maxCues = ceil((metaCyclesTotal - trialMat(i,4)/frPerMetaCyc) * maxCueEventsPerMC) - 1;
+        trialMat(i,6:7) = trialMat(i,6:7) .* randi([1, maxCues], 1, 2);
         %trialMat(i,6:7) = trialMat(i,6:7) .* randi([1, (metaCyclesTotal - trialMat(i,4)/frPerMetaCyc) * maxCueEventsPerMC], 1, 2);
-        trialMat(i,6:7) = trialMat(i,6:7) .* randi([1, maxCueEventsPerTrial], 1, 2);
+        %trialMat(i,6:7) = trialMat(i,6:7) .* randi([1, maxCueEventsPerTrial], 1, 2);
     end
     % recode number of events: attended array (col 8) and non-attended
     % array (col 9)
@@ -239,24 +237,6 @@ try
     blEventFrames = prepareBlEventFrames(trialMat(:,5),trialMat(:,4),flickDurFrames,blEventBuffer,blEventDur);
     cueEventFrames = prepareCueEventFrames(trialMat(:,6),trialMat(:,7),trialMat(:,4),flickDurFrames,cueEventBuffer,cueEventDur,picsPerArray);
    
-    % Training trials
-    trainingMat = NaN(12,11);
-    trainingMat(:,1) = [1 2 2 1 2 1 1 2 1 2 1 2]; % color/gray cue
-    trainingMat(:,2) = [1 1 2 2 1 1 2 2 1 1 2 2]; % color at which frequency?
-    trainingMat(:,3) = [0 0 0 0 0 0 0 0 0 0 0 0]; % don't need them, just so that the indices are identical with trialMat
-    trainingMat(:,4) = [2 1 2 1 2 2 1 1 2 1 2 1] .* frPerMetaCyc; % baseline length
-    trainingMat(:,5) = [0 1 0 2 0 0 1 0 2 0 1 0]; % # baseline events
-    trainingMat(:,6) = [0 1 0 2 0 0 0 1 3 0 0 0]; % # events in color array
-    trainingMat(:,7) = [0 2 0 0 0 2 0 0 1 0 0 1]; % # events in gray array
-    trainingMat(:,8) = [0 0 0 0 0 0 0 0 0 0 0 0]; % don't need them
-    trainingMat(:,9) = [0 0 0 0 0 0 0 0 0 0 0 0]; % don't need them
-    trainingMat(:,10) = createExpIntDurs(12,minMaxITItotal,meanITI*12); % total ITI duration
-    trainingMat(:,11) =  minMaxITIprerat(1) + rand(size(trainingMat,1),1).*diff(minMaxITIprerat); % time between trial and rating
-    % select for each trial the frames during which events will be "active" (training trials)
-    blEventFramesTraining = prepareBlEventFrames(trainingMat(:,5),trainingMat(:,4),flickDurFrames,blEventBuffer,blEventDur);
-    cueEventFramesTraining = prepareCueEventFrames(trainingMat(:,6),trainingMat(:,7),trainingMat(:,4),flickDurFrames,cueEventBuffer,cueEventDur,picsPerArray);
-    
-    
     % flicker sequences (on/off frames) for different tagging frequencies
     flickerVecs = NaN(length(frPerCyc), length(flickMods), flickDurFrames);
     for freq = 1:length(frPerCyc)
@@ -285,69 +265,6 @@ try
     Screen('Flip', w);
     KbStrokeWait;
     DrawFormattedText(w, welcomeMsg_partStart, 'center', 'center', textCol);
-    Screen('Flip', w);
-    waitForClick;
-    presFix(w, 5, 255);
-    
-    
-    %% Training start
-    
-    for trial = 1 : size(trainingMat,1)
-        % select pictures
-        picListInd = randperm(length(imFileListColor));
-        textureVec = [textureMat(picListInd(1:picsPerArray),1); ...
-                       textureMat(picListInd(picsPerArray+1:2*picsPerArray),2)];
-
-        % prepare vectors for central tile
-        tickLengthVec = zeros(2,4,flickDurFrames);
-        tickLengthVec(:,:,1:trainingMat(trial,4)) = repmat(standardTickPos,1,1,trainingMat(trial,4));
-        tickLengthVec(:,:,logical(blEventFramesTraining{trial,:})) = repmat(eventTickPos,1,1,sum(blEventFramesTraining{trial,:}));
-        cueVec(1,1:trainingMat(trial,4)) = ' ';
-        cueVec(1,trainingMat(trial,4)+1:flickDurFrames) = cueLetters(trainingMat(trial,1));
-        
-        % prepare luminance vectors
-        lumVectors = NaN(2*picsPerArray, flickDurFrames);
-        lumVectors(1:picsPerArray,:) = repmat(flickerVecs(trainingMat(trial,2),:), picsPerArray,1);
-        lumVectors(picsPerArray+1:end,:) = repmat(flickerVecs(3-trainingMat(trial,2),:), picsPerArray,1);
-        lumVectors(logical(cueEventFramesTraining{trial})) = lumVectors(logical(cueEventFramesTraining{trial})) .* relEventLum;
-        
-        % compute positions for pictures
-        posVecCenter = createCircPositions (2*picsPerArray, flickDurFrames, ...
-                                      minRho, maxRho, 2*picRad, shiftPix);
-        posVecCenter = permute(posVecCenter,[2 1 3]);
-        posVecCoord = cat(1, ...
-                        centX + posVecCenter(1,:,:) - imSizePix(1)/2, ...
-                        centY + posVecCenter(2,:,:) - imSizePix(2)/2, ...
-                        centX + posVecCenter(1,:,:) + imSizePix(1)/2, ...
-                        centY + posVecCenter(2,:,:) + imSizePix(2)/2);
-        
-        % set text for rating
-        ratingText = {['How many events in the central cross and the flashing ' ...
-                       textForRatings{trainingMat(trial,1)} ' pictures\n' ...
-                       'did you count in total?']};
-
-        % present trial while logging actual flicker duration
-        presTrial_ssv4MainPilot(w, ...
-                        textureVec, posVecCoord, lumVectors, trainingMat(trial,4), ...
-                        centTileCol, centTileCoord, tickLengthVec, cueVec, ...
-                        []);
-
-        %fixation
-        presFix(w, trainingMat(trial,11), 255);
-
-        % rating
-        ShowCursor();
-        rateMouseNopic(w, buttonsOK, 0, false, false, ratingDur, ...
-                        scaleLabels, scaleAnchors, ratingText, textCol);
-        HideCursor();
-
-        % fixation
-        presFix(w, trainingMat(trial,10)-trainingMat(trial,11)-ratingDur, 255);
-
-    end % training loop
-    
-    
-    DrawFormattedText(w, trainingOverMsg, 'center', 'center', textCol);
     Screen('Flip', w);
     waitForClick;
     presFix(w, 5, 255);
