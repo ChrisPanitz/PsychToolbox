@@ -66,11 +66,11 @@ gratingBright = 255; % bright grating stripes = 0 = white
 fontSize = 24; % well... font size
 
 % for logfiles and rating files
-logFileFolder = 'C:\Users\dinglab.UFAD\Desktop\Gaborgen24 paradigm\';
+logFileFolder = 'C:\Users\dinglab.UFAD\Desktop\Gaborgen24 paradigm\logfiles\';
 logFilePrefix = 'gaborgen24_fMRI_Day1';
-ratFileFolder = 'C:\Users\dinglab.UFAD\Desktop\Gaborgen24 paradigm\';
+ratFileFolder = 'C:\Users\dinglab.UFAD\Desktop\Gaborgen24 paradigm\ratings\';
 ratFilePrefix = 'gaborgen24_fMRI_Day1'; 
-ratAllFileFolder = 'C:\Users\dinglab.UFAD\Desktop\Gaborgen24 paradigm\';
+ratAllFileFolder = 'C:\Users\dinglab.UFAD\Desktop\Gaborgen24 paradigm\ratings\';
 ratAllFilePrefix = 'gaborgen24_fMRI_Day1'; 
 
 % strings of instructions to participants          
@@ -118,9 +118,13 @@ adressesLPT = hex2dec(addressesLPTHex);
 
 %% Prepare logging
 
-% files to write trial & rating data + variable names for header line
-% logfiles
+% check if logfile already exists
 logFileName = strcat(logFileFolder, logFilePrefix, '_', num2str(subNo), '_logfile.dat');
+if exist(logFileName, 'file')
+    error(['There already is a logfile for this participant number. Please use different number or remove logfile from this folder: ' logFileFolder]);
+end
+% write header lines
+% logfiles
 fIDLog = fopen(logFileName, 'w');
 fprintf(fIDLog,'partNo,csPerm,trial,phase,block,stim,paired,timeSinceFirstTR,actFlickDur,itiDur\n');
 fclose(fIDLog);
