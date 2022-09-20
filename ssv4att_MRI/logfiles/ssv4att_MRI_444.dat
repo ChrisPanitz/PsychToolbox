@@ -1,0 +1,4 @@
+subNo,trial,attendCond,freqCol,freqAttend,blInFr,nrBLEvents,nrCueEventsCol,nrCueEventsGray,nrCueEventsAttend,nrCueEventsNonattend,eventsCounted,timeSinceFirstTR,itiDur,preRatDur,ratDur,actFlickDur,pCol1,pCol2,pCol3,pCol4,pGray1,pGray2,pGray3,pGray4
+444,1,1,1,1,224,0,0,0,0,0,1,6.0743,9.5319,0.7427,4.0531,12.137,6,3,16,5,18,13,12,4
+444,2,2,1,2,168,0,0,0,0,0,5,29.929,7.5709,0.60442,4.0427,12.142,8,20,15,7,12,6,14,3
+444,3,1,1,1,168,0,0,0,0,0,1,51.789,9.0207,0.62777,4.0454,12.156,20,14,10,5,16,12,11,18
